@@ -51,7 +51,12 @@ static const double SpectralEfficiencyForCqi[16] = {
   1.48, 1.91, 2.41,
   2.73, 3.32, 3.9, 4.52, 5.12, 5.55
 };
-
+//static const double SpectralEfficiencyForCqi[16] = {
+//  0.0, // out of range
+//  0.15, 0.184, 0.3066, 0.491, 0.7314,0.996,
+//  1.2667, 1.6631, 2.1343,
+//  2.44, 3.01, 3.57, 4.189, 4.783, 5.2105
+//};
 #if 0 // currently unused
 /**
  * Table of MCS index (IMCS) and its TBS index (ITBS). Taken from 3GPP TS
@@ -290,9 +295,32 @@ LteAmc::GetTbSizeFromMcs (int mcs, int nprb)
   NS_ASSERT_MSG (nprb < 111, "NPRB=" << nprb);
 
   int itbs = McsToItbs[mcs];
+      NS_LOG_FUNCTION (this << "itbs = " << itbs);
+
   return (TransportBlockSizeTable[nprb - 1][itbs]);
 }
 
+int
+LteAmc::GetNPRBSizeFromTbSize (int mcs, int tbsize)
+{
+  NS_LOG_FUNCTION (mcs);
+  NS_ASSERT_MSG (mcs < 29, "MCS=" << mcs);
+  int itbs = McsToItbs[mcs];
+  if(tbsize <= 0){
+      return 0;
+  }
+      NS_LOG_FUNCTION (this << "itbs = " << itbs);
+
+  int i = 0;
+  for(; i < 110; i++){
+              NS_LOG_FUNCTION (this << "i = " << i);
+
+      if(TransportBlockSizeTable[i][itbs] >= tbsize){
+          break;
+      }
+  }
+  return i+1;
+}
 
 double
 LteAmc::GetSpectralEfficiencyFromCqi (int cqi)

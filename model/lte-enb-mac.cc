@@ -35,6 +35,7 @@
 #include <ns3/lte-ue-phy.h>
 
 #include "ns3/lte-mac-sap.h"
+#include "lte-vendor-specific-parameters.h"
 #include <ns3/lte-common.h>
 
 
@@ -954,7 +955,15 @@ LteEnbMac::DoReportBufferStatus (LteMacSapProvider::ReportBufferStatusParameters
   req.m_rlcRetransmissionQueueSize = params.retxQueueSize;
   req.m_rlcRetransmissionHolDelay = params.retxQueueHolDelay;
   req.m_rlcStatusPduSize = params.statusPduSize;
+  req.m_vendorSpecificList = params.m_vendorSpecificList;
+  if (req.m_vendorSpecificList.size()>0){  
+          Ptr<RlcPacketLengths> RlcPacketLengths_final = DynamicCast<RlcPacketLengths> (req.m_vendorSpecificList.at(0).m_value);
+
+        NS_LOG_DEBUG (this << " +++++SOYO++mac DoReportBufferStatus stored " << RlcPacketLengths_final->GetTotalPacketLength());
+  }
   m_schedSapProvider->SchedDlRlcBufferReq (req);
+    NS_LOG_DEBUG (this << " +++++SOYO++mac DoReportBufferStatus end ");
+
 }
 
 

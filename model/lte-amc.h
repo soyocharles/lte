@@ -81,6 +81,7 @@ public:
   * \return the Transport Block Size in bits
   */
   /*static*/ int GetTbSizeFromMcs (int mcs, int nprb);
+  /*static*/ int GetNPRBSizeFromTbSize (int mcs, int tbsize);
 
   /**
    * \brief Get the spectral efficiency value associated

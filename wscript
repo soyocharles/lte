@@ -121,6 +121,16 @@ def build(bld):
         'model/lte-ffr-enhanced-algorithm.cc',
         'model/lte-ffr-distributed-algorithm.cc',
         'model/lte-ue-power-control.cc',
+
+        'model/PacketMeasurement.cc',
+        'model/UdpClientLatency.cc',
+        'model/UdpServerLatency.cc',
+        'model/seq-ts-header.cc',
+        'model/timetag.cc',
+        'model/spf-rr-ff-mac-scheduler.cc',
+        'model/sl-pf-ff-mac-scheduler.cc'
+
+
         ]
 
     module_test = bld.create_ns3_module_test_library('lte')
@@ -295,7 +305,17 @@ def build(bld):
         'model/lte-ffr-soft-algorithm.h',
         'model/lte-ffr-enhanced-algorithm.h',
         'model/lte-ffr-distributed-algorithm.h',     
-        'model/lte-ue-power-control.h',           
+        'model/lte-ue-power-control.h', 
+
+        'model/PacketMeasurement.h',
+        'model/UdpClientLatency.h',
+        'model/UdpServerLatency.h',
+        'model/seq-ts-header.h',
+        'model/timetag.h',          
+        'model/spf-rr-ff-mac-scheduler.h',
+        'model/sl-pf-ff-mac-scheduler.h'
+
+
         ]
 
     if (bld.env['ENABLE_EMU']):

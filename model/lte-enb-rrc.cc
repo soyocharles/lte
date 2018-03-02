@@ -1627,7 +1627,11 @@ LteEnbRrc::GetUeManager (uint16_t rnti)
   NS_ASSERT_MSG (it != m_ueMap.end (), "RNTI " << rnti << " not found in eNB with cellId " << m_cellId);
   return it->second;
 }
-
+std::map<uint16_t, Ptr<UeManager> >
+LteEnbRrc::GetUeManagerAll ()
+{   
+    return m_ueMap;
+}
 uint8_t
 LteEnbRrc::AddUeMeasReportConfig (LteRrcSap::ReportConfigEutra config)
 {

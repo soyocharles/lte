@@ -45,6 +45,25 @@ class SrsCqiRntiVsp : public VendorSpecificValue
 };
 
 
+class RlcPacketLengths : public VendorSpecificValue
+{
+  public:
+  RlcPacketLengths ();
+  virtual ~RlcPacketLengths ();
+  
+  uint16_t GetNumPacket ();
+  uint32_t GetFirstPacketLength();
+  uint32_t GetTotalPacketLength();
+
+  uint16_t AddOnePacket(uint32_t length);
+  uint32_t RemoveEmpty();
+  uint32_t RemoveSomeAtFirst(uint32_t length);
+  
+  void CleanAll();
+  
+  private:
+    std::vector<uint32_t> m_packetlengths;
+};
 
 }; // namespace ns3
 

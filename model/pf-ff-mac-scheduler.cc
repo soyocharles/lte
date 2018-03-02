@@ -35,12 +35,7 @@ namespace ns3 {
 
 NS_LOG_COMPONENT_DEFINE ("PfFfMacScheduler");
 
-static const int PfType0AllocationRbg[4] = {
-  10,       // RGB size 1
-  26,       // RGB size 2
-  63,       // RGB size 3
-  110       // RGB size 4
-};  // see table 7.1.6.1-1 of 36.213
+
 
 
 NS_OBJECT_ENSURE_REGISTERED (PfFfMacScheduler);
@@ -504,7 +499,7 @@ PfFfMacScheduler::GetRbgSize (int dlbandwidth)
 {
   for (int i = 0; i < 4; i++)
     {
-      if (dlbandwidth < PfType0AllocationRbg[i])
+      if (dlbandwidth < Type0AllocationRbg[i])
         {
           return (i + 1);
         }
@@ -665,7 +660,7 @@ PfFfMacScheduler::DoSchedDlTriggerReq (const struct FfMacSchedSapProvider::Sched
   std::set <uint16_t> rntiAllocated;
   rbgMap.resize (m_cschedCellConfig.m_dlBandwidth / rbgSize, false);
 
-  rbgMap = m_ffrSapProvider->GetAvailableDlRbg ();
+  rbgMap = m_ffrSapProvider->GetAvailableDlRbg ();  
   for (std::vector<bool>::iterator it = rbgMap.begin (); it != rbgMap.end (); it++)
     {
       if ((*it) == true )
@@ -1086,7 +1081,7 @@ PfFfMacScheduler::DoSchedDlTriggerReq (const struct FfMacSchedSapProvider::Sched
           double rcqiMax = 0.0;
           for (it = m_flowStatsDl.begin (); it != m_flowStatsDl.end (); it++)
             {
-              if ((m_ffrSapProvider->IsDlRbgAvailableForUe (i, (*it).first)) == false)
+            if ((m_ffrSapProvider->IsDlRbgAvailableForUe (i, (*it).first)) == false)
                 continue;
 
               std::set <uint16_t>::iterator itRnti = rntiAllocated.find ((*it).first);

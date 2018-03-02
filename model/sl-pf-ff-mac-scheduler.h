@@ -16,20 +16,26 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  * Author: Marco Miozzo <marco.miozzo@cttc.es>
- *         Nicola Baldo <nbaldo@cttc.es>
  */
 
-#ifndef SPF_RR_FF_MAC_SCHEDULER_H
-#define SPF_RR_FF_MAC_SCHEDULER_H
+#ifndef SL_PF_FF_MAC_SCHEDULER_H
+#define SL_PF_FF_MAC_SCHEDULER_H
 
+#include <ns3/lte-common.h>
+#include "lte-enb-rrc.h"
 #include <ns3/ff-mac-csched-sap.h>
 #include <ns3/ff-mac-sched-sap.h>
 #include <ns3/ff-mac-scheduler.h>
 #include <vector>
 #include <map>
-#include <ns3/lte-common.h>
+#include <ns3/nstime.h>
 #include <ns3/lte-amc.h>
 #include <ns3/lte-ffr-sap.h>
+
+// value for SINR outside the range defined by FF-API, used to indicate that there
+// is no CQI for this element
+#define NO_SINR -5000
+
 
 #define HARQ_PROC_NUM 8
 #define HARQ_DL_TIMEOUT 11
@@ -47,16 +53,23 @@ typedef std::vector < UlDciListElement_s > UlHarqProcessesDciBuffer_t;
 typedef std::vector < uint8_t > UlHarqProcessesStatus_t;
 
 
+struct slpfsFlowPerf_t
+{
+  Time flowStart;
+  unsigned long totalBytesTransmitted;
+  unsigned int lastTtiBytesTrasmitted;
+  double lastAveragedThroughput;
+};
 
 
 /**
  * \ingroup ff-api
- * \brief Implements the SCHED SAP and CSCHED SAP for a Round Robin scheduler
+ * \brief Implements the SCHED SAP and CSCHED SAP for a Proportional Fair scheduler
  *
  * This class implements the interface defined by the FfMacScheduler abstract class
  */
 
-class SpfRrFfMacScheduler : public FfMacScheduler
+class SlPfFfMacScheduler : public FfMacScheduler
 {
 public:
   /**
@@ -64,12 +77,12 @@ public:
    *
    * Creates the MAC Scheduler interface implementation
    */
-  SpfRrFfMacScheduler ();
+  SlPfFfMacScheduler ();
 
   /**
    * Destructor
    */
-  virtual ~SpfRrFfMacScheduler ();
+  virtual ~SlPfFfMacScheduler ();
 
   // inherited from Object
   virtual void DoDispose (void);
@@ -80,13 +93,20 @@ public:
   virtual void SetFfMacSchedSapUser (FfMacSchedSapUser* s);
   virtual FfMacCschedSapProvider* GetFfMacCschedSapProvider ();
   virtual FfMacSchedSapProvider* GetFfMacSchedSapProvider ();
+void
+SetEnbRrc(Ptr<LteEnbRrc> r);
+void
+SetSliceUeMap(std::map<uint64_t, uint8_t > map);
+void
+SetSliceRbMap(std::map<uint8_t, std::pair<uint8_t,uint8_t> > map);
+
 
   // FFR SAPs
   virtual void SetLteFfrSapProvider (LteFfrSapProvider* s);
   virtual LteFfrSapUser* GetLteFfrSapUser ();
 
-  friend class SpfRrSchedulerMemberCschedSapProvider;
-  friend class SpfRrSchedulerMemberSchedSapProvider;
+  friend class SlPfSchedulerMemberCschedSapProvider;
+  friend class SlPfSchedulerMemberSchedSapProvider;
 
   void TransmissionModeConfigurationUpdate (uint16_t rnti, uint8_t txMode);
 
@@ -95,7 +115,9 @@ private:
   // Implementation of the CSCHED API primitives
   // (See 4.1 for description of the primitives)
   //
-
+Ptr<LteEnbRrc> m_enbrrc;
+std::map<uint64_t, uint8_t > m_sliceuemap;
+std::map<uint8_t, std::pair<uint8_t,uint8_t> > m_slicerbmap;
   void DoCschedCellConfigReq (const struct FfMacCschedSapProvider::CschedCellConfigReqParameters& params);
 
   void DoCschedUeConfigReq (const struct FfMacCschedSapProvider::CschedUeConfigReqParameters& params);
@@ -136,11 +158,10 @@ private:
 
   int GetRbgSize (int dlbandwidth);
 
-  static bool SortRlcBufferReq (FfMacSchedSapProvider::SchedDlRlcBufferReqParameters i,FfMacSchedSapProvider::SchedDlRlcBufferReqParameters j);
-  static bool SortRlcBufferReqCqiPair (std::pair<FfMacSchedSapProvider::SchedDlRlcBufferReqParameters,uint8_t> i,std::pair<FfMacSchedSapProvider::SchedDlRlcBufferReqParameters,uint8_t> j);
+  int LcActivePerFlow (uint16_t rnti);
 
-  uint32_t updatePacketBuffer (const std::list <std::pair<FfMacSchedSapProvider::SchedDlRlcBufferReqParameters,uint8_t>>& canBeTransferred);
-  
+  double EstimateUlSinr (uint16_t rnti, uint16_t rb);
+
   void RefreshDlCqiMaps (void);
   void RefreshUlCqiMaps (void);
 
@@ -172,10 +193,22 @@ private:
   Ptr<LteAmc> m_amc;
 
   /*
-   * Vectors of UE's RLC info
+   * Vectors of UE's LC info
   */
-  std::list <FfMacSchedSapProvider::SchedDlRlcBufferReqParameters> m_rlcBufferReq;
-  std::map <uint16_t,uint8_t> m_transmittedRnti ;
+  std::map <LteFlowId_t, FfMacSchedSapProvider::SchedDlRlcBufferReqParameters> m_rlcBufferReq;
+
+
+  /*
+  * Map of UE statistics (per RNTI basis) in downlink
+  */
+  std::map <uint16_t, slpfsFlowPerf_t> m_flowStatsDl;
+
+  /*
+  * Map of UE statistics (per RNTI basis)
+  */
+  std::map <uint16_t, slpfsFlowPerf_t> m_flowStatsUl;
+
+
   /*
   * Map of UE's DL CQI P01 received
   */
@@ -184,6 +217,15 @@ private:
   * Map of UE's timers on DL CQI P01 received
   */
   std::map <uint16_t,uint32_t> m_p10CqiTimers;
+
+  /*
+  * Map of UE's DL CQI A30 received
+  */
+  std::map <uint16_t,SbMeasResult_s> m_a30CqiRxed;
+  /*
+  * Map of UE's timers on DL CQI A30 received
+  */
+  std::map <uint16_t,uint32_t> m_a30CqiTimers;
 
   /*
   * Map of previous allocated UE per RBG
@@ -199,8 +241,6 @@ private:
   * Map of UEs' timers on UL-CQI per RBG
   */
   std::map <uint16_t, uint32_t> m_ueCqiTimers;
-
-
 
   /*
   * Map of UE's buffer status reports received
@@ -220,14 +260,14 @@ private:
   // Internal parameters
   FfMacCschedSapProvider::CschedCellConfigReqParameters m_cschedCellConfig;
 
-  uint16_t m_nextRntiDl; // RNTI of the next user to be served next scheduling in DL
+
+  double m_timeWindow;
+
   uint16_t m_nextRntiUl; // RNTI of the next user to be served next scheduling in UL
 
   uint32_t m_cqiTimersThreshold; // # of TTIs for which a CQI canbe considered valid
 
   std::map <uint16_t,uint8_t> m_uesTxMode; // txMode of the UEs
-  
-
 
   // HARQ attributes
   /**
@@ -256,8 +296,9 @@ private:
   std::vector <struct RachListElement_s> m_rachList;
   std::vector <uint16_t> m_rachAllocationMap;
   uint8_t m_ulGrantMcs; // MCS for UL grant (default 0)
+
 };
 
 } // namespace ns3
 
-#endif /* RR_FF_MAC_SCHEDULER_H */
+#endif /* PF_FF_MAC_SCHEDULER_H */

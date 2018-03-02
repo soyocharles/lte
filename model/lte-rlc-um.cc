@@ -25,6 +25,7 @@
 #include "ns3/lte-rlc-um.h"
 #include "ns3/lte-rlc-sdu-status-tag.h"
 #include "ns3/lte-rlc-tag.h"
+#include "lte-vendor-specific-parameters.h"
 
 namespace ns3 {
 
@@ -33,7 +34,7 @@ NS_LOG_COMPONENT_DEFINE ("LteRlcUm");
 NS_OBJECT_ENSURE_REGISTERED (LteRlcUm);
 
 LteRlcUm::LteRlcUm ()
-  : m_maxTxBufferSize (10 * 1024),
+  : m_maxTxBufferSize (700),
     m_txBufferSize (0),
     m_sequenceNumber (0),
     m_vrUr (0),
@@ -60,7 +61,7 @@ LteRlcUm::GetTypeId (void)
     .AddConstructor<LteRlcUm> ()
     .AddAttribute ("MaxTxBufferSize",
                    "Maximum Size of the Transmission Buffer (in Bytes)",
-                   UintegerValue (10 * 1024),
+                   UintegerValue (1024),
                    MakeUintegerAccessor (&LteRlcUm::m_maxTxBufferSize),
                    MakeUintegerChecker<uint32_t> ())
     ;
@@ -115,6 +116,8 @@ LteRlcUm::DoTransmitPdcpPdu (Ptr<Packet> p)
 
   /** Report Buffer Status */
   DoReportBufferStatus ();
+NS_LOG_LOGIC ("ffffffffff    = ");
+
   m_rbsTimer.Cancel ();
 }
 
@@ -150,6 +153,7 @@ LteRlcUm::DoNotifyTxOpportunity (uint32_t bytes, uint8_t layer, uint8_t harqId)
   if ( m_txBuffer.size () == 0 )
     {
       NS_LOG_LOGIC ("No data pending");
+      DoReportBufferStatus();
       return;
     }
 
@@ -300,6 +304,8 @@ LteRlcUm::DoNotifyTxOpportunity (uint32_t bytes, uint8_t layer, uint8_t harqId)
           rlcHeader.PushLengthIndicator (firstSegment->GetSize ());
 
           nextSegmentSize -= ((nextSegmentId % 2) ? (2) : (1)) + dataFieldAddedSize;
+            NS_LOG_LOGIC ("++++++ nextSegmentId++++   " << nextSegmentId );
+          NS_LOG_LOGIC ("++++++Next OverHead Length ++++   " << ((nextSegmentId % 2) ? (2) : (1)) );
           nextSegmentId++;
 
           NS_LOG_LOGIC ("        SDUs in TxBuffer  = " << m_txBuffer.size ());
@@ -342,11 +348,12 @@ LteRlcUm::DoNotifyTxOpportunity (uint32_t bytes, uint8_t layer, uint8_t harqId)
     {
       framingInfo |= LteRlcHeader::NO_FIRST_BYTE;
     }
+      NS_LOG_LOGIC ("rnti = " << m_rnti);
 
   while (it < dataField.end ())
     {
       NS_LOG_LOGIC ("Adding SDU/segment to packet, length = " << (*it)->GetSize ());
-
+      
       NS_ASSERT_MSG ((*it)->PeekPacketTag (tag), "LteRlcSduStatusTag is missing");
       (*it)->RemovePacketTag (tag);
       if (packet->GetSize () > 0)
@@ -371,11 +378,14 @@ LteRlcUm::DoNotifyTxOpportunity (uint32_t bytes, uint8_t layer, uint8_t harqId)
     {
       framingInfo |= LteRlcHeader::NO_LAST_BYTE;
     }
+  NS_LOG_LOGIC ("RLC header final: " << rlcHeader);
 
   rlcHeader.SetFramingInfo (framingInfo);
 
-  NS_LOG_LOGIC ("RLC header: " << rlcHeader);
+  NS_LOG_LOGIC ("RLC header final: " << rlcHeader);
+    NS_LOG_LOGIC ("without RLC header size: " << packet->GetSize());
   packet->AddHeader (rlcHeader);
+    NS_LOG_LOGIC ("with RLC header size: " << packet->GetSize());
 
   // Sender timestamp
   RlcTag rlcTag (Simulator::Now ());
@@ -391,6 +401,7 @@ LteRlcUm::DoNotifyTxOpportunity (uint32_t bytes, uint8_t layer, uint8_t harqId)
   params.harqProcessId = harqId;
 
   m_macSapProvider->TransmitPdu (params);
+  DoReportBufferStatus();
 
   if (! m_txBuffer.empty ())
     {
@@ -1139,8 +1150,34 @@ LteRlcUm::DoReportBufferStatus (void)
   r.retxQueueHolDelay = 0;
   r.statusPduSize = 0;
 
+    std::vector <struct VendorSpecificListElement_s> vlist;
+
+    NS_LOG_LOGIC ("+++++add_vender+++++ 1 " );
+    struct VendorSpecificListElement_s PacketLengths;
+    m_rlcPacketLengths.CleanAll();
+    Ptr<RlcPacketLengths> RlcPacketLengths_temp = &m_rlcPacketLengths;
+    std::vector < Ptr<Packet> >::iterator it;
+    NS_LOG_LOGIC ("+++++add_vender+++++ 2 " );
+
+    for(it = m_txBuffer.begin(); it != m_txBuffer.end(); it++){
+        NS_LOG_LOGIC ("+++++add_vender+++++3 " );
+        RlcPacketLengths_temp->AddOnePacket((*it)->GetSize());
+    }
+    NS_LOG_LOGIC ("+++++add_vender+++++ 4" );
+
+    PacketLengths.m_type = 0;
+    PacketLengths.m_length = RlcPacketLengths_temp->GetNumPacket();
+    PacketLengths.m_value = RlcPacketLengths_temp;
+    vlist.insert(vlist.begin(),PacketLengths);
+    Ptr<RlcPacketLengths> RlcPacketLengths_final = DynamicCast<RlcPacketLengths> (vlist.at(0).m_value);
+    NS_LOG_LOGIC ("stored packet size ++++++   " <<  RlcPacketLengths_final->GetTotalPacketLength());
+
+    r.m_vendorSpecificList = vlist; 
+  NS_LOG_LOGIC ("+++++SOYO++++++++std::vector <struct VendorSpecificListElement_s>++len = " << r.m_vendorSpecificList.size() );
   NS_LOG_LOGIC ("Send ReportBufferStatus = " << r.txQueueSize << ", " << r.txQueueHolDelay );
   m_macSapProvider->ReportBufferStatus (r);
+    NS_LOG_LOGIC ("finish report" );
+
 }
 
 

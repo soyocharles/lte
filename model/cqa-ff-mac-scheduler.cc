@@ -43,12 +43,7 @@ namespace ns3 {
 
 NS_LOG_COMPONENT_DEFINE ("CqaFfMacScheduler");
 
-static const int CqaType0AllocationRbg[4] = {
-  10,       // RGB size 1
-  26,       // RGB size 2
-  63,       // RGB size 3
-  110       // RGB size 4
-};  // see table 7.1.6.1-1 of 36.213
+
 
 
 NS_OBJECT_ENSURE_REGISTERED (CqaFfMacScheduler);
@@ -635,7 +630,7 @@ CqaFfMacScheduler::GetRbgSize (int dlbandwidth)
 {
   for (int i = 0; i < 4; i++)
     {
-      if (dlbandwidth < CqaType0AllocationRbg[i])
+      if (dlbandwidth < Type0AllocationRbg[i])
         {
           return (i + 1);
         }

@@ -22,6 +22,7 @@
 #define LTE_MAC_SAP_H
 
 #include <ns3/packet.h>
+#include "ff-mac-common.h"
 
 namespace ns3 {
 
@@ -72,6 +73,7 @@ public:
     uint32_t retxQueueSize;  /**<  the current size of the RLC retransmission queue in bytes */
     uint16_t retxQueueHolDelay;  /**<  the Head Of Line delay of the retransmission queue */
     uint16_t statusPduSize;  /**< the current size of the pending STATUS RLC  PDU message in bytes */
+    std::vector <struct VendorSpecificListElement_s> m_vendorSpecificList; /**< add some more information for scheduler */
   };
 
   /**

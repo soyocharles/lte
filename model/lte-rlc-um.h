@@ -26,6 +26,7 @@
 
 #include <ns3/event-id.h>
 #include <map>
+#include "lte-vendor-specific-parameters.h"
 
 namespace ns3 {
 
@@ -107,6 +108,8 @@ private:
    * Expected Sequence Number
    */
   SequenceNumber10 m_expectedSeqNumber;
+  
+  RlcPacketLengths m_rlcPacketLengths;
 
 };
 

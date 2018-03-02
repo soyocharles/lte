@@ -29,6 +29,7 @@
 
 #include "epc-gtpu-header.h"
 #include "eps-bearer-tag.h"
+#include "PacketMeasurement.h"
 
 
 namespace ns3 {
@@ -93,6 +94,9 @@ EpcEnbApplication::EpcEnbApplication (Ptr<Socket> lteSocket, Ptr<Socket> s1uSock
   m_lteSocket->SetRecvCallback (MakeCallback (&EpcEnbApplication::RecvFromLteSocket, this));
   m_s1SapProvider = new MemberEpcEnbS1SapProvider<EpcEnbApplication> (this);
   m_s1apSapEnb = new MemberEpcS1apSapEnb<EpcEnbApplication> (this);
+  std::string  a =  "s1u_cell_";
+  a += std::to_string(cellId);
+  S1uMeasure.SetMeasurementName(a);
 }
 
 
@@ -271,6 +275,8 @@ EpcEnbApplication::RecvFromS1uSocket (Ptr<Socket> socket)
   Ptr<Packet> packet = socket->Recv ();
   GtpuHeader gtpu;
   packet->RemoveHeader (gtpu);
+    S1uMeasure.MeasurePacket(packet);
+
   uint32_t teid = gtpu.GetTeid ();
   std::map<uint32_t, EpsFlowId_t>::iterator it = m_teidRbidMap.find (teid);
   NS_ASSERT (it != m_teidRbidMap.end ());

@@ -456,7 +456,7 @@ LteHelper::InstallSingleEnbDevice (Ptr<Node> n)
   Ptr<LteFfrAlgorithm> ffrAlgorithm = m_ffrAlgorithmFactory.Create<LteFfrAlgorithm> ();
   Ptr<LteHandoverAlgorithm> handoverAlgorithm = m_handoverAlgorithmFactory.Create<LteHandoverAlgorithm> ();
   Ptr<LteEnbRrc> rrc = CreateObject<LteEnbRrc> ();
-  rrc->SetSrsPeriodicity(40);
+  rrc->SetSrsPeriodicity(160);
   if (m_useIdealRrc)
     {
       Ptr<LteEnbRrcProtocolIdeal> rrcProtocol = CreateObject<LteEnbRrcProtocolIdeal> ();
@@ -521,6 +521,8 @@ LteHelper::InstallSingleEnbDevice (Ptr<Node> n)
   dev->SetAttribute ("LteEnbRrc", PointerValue (rrc)); 
   dev->SetAttribute ("LteHandoverAlgorithm", PointerValue (handoverAlgorithm));
   dev->SetAttribute ("LteFfrAlgorithm", PointerValue (ffrAlgorithm));
+  dev->SetAttribute ("DlBandwidth", UintegerValue (100));
+  dev->SetAttribute ("UlBandwidth", UintegerValue (100));
 
   if (m_isAnrEnabled)
     {

@@ -34,6 +34,7 @@
 #include <ns3/eps-bearer.h>
 #include <ns3/epc-enb-s1-sap.h>
 #include <ns3/epc-s1ap-sap.h>
+#include "PacketMeasurement.h"
 #include <map>
 
 namespace ns3 {
@@ -61,7 +62,7 @@ protected:
 
 public:
   
-  
+    
 
   /** 
    * Constructor
@@ -74,6 +75,7 @@ public:
    * \param cellId the identifier of the enb
    */
   EpcEnbApplication (Ptr<Socket> lteSocket, Ptr<Socket> s1uSocket, Ipv4Address enbS1uAddress, Ipv4Address sgwS1uAddress, uint16_t cellId);
+    PacketMeasurement S1uMeasure;
 
   /**
    * Destructor

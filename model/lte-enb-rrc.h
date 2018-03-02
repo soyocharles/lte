@@ -679,6 +679,7 @@ public:
    * \return the corresponding UeManager instance
    */
   Ptr<UeManager> GetUeManager (uint16_t rnti);
+  std::map<uint16_t, Ptr<UeManager> > GetUeManagerAll ();
 
   /**
    * \brief Add a new UE measurement reporting configuration

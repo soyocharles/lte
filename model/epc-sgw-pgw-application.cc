@@ -27,6 +27,7 @@
 #include "ns3/inet-socket-address.h"
 #include "ns3/epc-gtpu-header.h"
 #include "ns3/abort.h"
+#include "PacketMeasurement.h"
 
 namespace ns3 {
 
@@ -126,6 +127,8 @@ EpcSgwPgwApplication::EpcSgwPgwApplication (const Ptr<VirtualNetDevice> tunDevic
   NS_LOG_FUNCTION (this << tunDevice << s1uSocket);
   m_s1uSocket->SetRecvCallback (MakeCallback (&EpcSgwPgwApplication::RecvFromS1uSocket, this));
   m_s11SapSgw = new MemberEpcS11SapSgw<EpcSgwPgwApplication> (this);
+    S1uMeasure.SetMeasurementName("gwS1u");
+    TunMeasure.SetMeasurementName("gwTun");
 }
 
   
@@ -163,6 +166,7 @@ EpcSgwPgwApplication::RecvFromTunDevice (Ptr<Packet> packet, const Address& sour
         }
       else
         {
+           TunMeasure.MeasurePacket(packet);
           SendToS1uSocket (packet, enbAddr, teid);
         }
     }

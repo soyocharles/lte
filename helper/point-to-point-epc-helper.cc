@@ -177,6 +177,7 @@ PointToPointEpcHelper::AddEnb (Ptr<Node> enb, Ptr<NetDevice> lteEnbNetDevice, ui
   enbSgwNodes.Add (m_sgwPgw);
   enbSgwNodes.Add (enb);
   PointToPointHelper p2ph;
+  p2ph.SetQueue ("ns3::DropTailQueue");
   p2ph.SetDeviceAttribute ("DataRate", DataRateValue (m_s1uLinkDataRate));
   p2ph.SetDeviceAttribute ("Mtu", UintegerValue (m_s1uLinkMtu));
   p2ph.SetChannelAttribute ("Delay", TimeValue (m_s1uLinkDelay));  

@@ -36,12 +36,7 @@ namespace ns3 {
 
 NS_LOG_COMPONENT_DEFINE ("RrFfMacScheduler");
 
-static const int Type0AllocationRbg[4] = {
-  10,       // RGB size 1
-  26,       // RGB size 2
-  63,       // RGB size 3
-  110       // RGB size 4
-};  // see table 7.1.6.1-1 of 36.213
+
 
 
 
@@ -433,7 +428,11 @@ RrFfMacScheduler::DoCschedUeReleaseReq (const struct FfMacCschedSapProvider::Csc
   return;
 }
 
-
+/*
+ *This function update buffer status of logical channel data in RLC.
+ *erase *it of m_rlcBufferReq
+ *and add the new bufferReq at the end
+ */
 void
 RrFfMacScheduler::DoSchedDlRlcBufferReq (const struct FfMacSchedSapProvider::SchedDlRlcBufferReqParameters& params)
 {
@@ -611,8 +610,9 @@ RrFfMacScheduler::RefreshHarqProcesses ()
 
 }
 
-
-
+/*Start the DLMAC scheduler for this subframe
+ * 
+ */
 void
 RrFfMacScheduler::DoSchedDlTriggerReq (const struct FfMacSchedSapProvider::SchedDlTriggerReqParameters& params)
 {
@@ -1057,7 +1057,7 @@ RrFfMacScheduler::DoSchedDlTriggerReq (const struct FfMacSchedSapProvider::Sched
 
   // round robin assignment to all UEs registered starting from the subsequent of the one
   // served last scheduling trigger event
-  if (m_nextRntiDl != 0)
+    if (m_nextRntiDl != 0)
     {
       NS_LOG_DEBUG ("Start from the successive of " << (uint16_t) m_nextRntiDl);
       for (it = m_rlcBufferReq.begin (); it != m_rlcBufferReq.end (); it++)
@@ -1080,13 +1080,13 @@ RrFfMacScheduler::DoSchedDlTriggerReq (const struct FfMacSchedSapProvider::Sched
           NS_LOG_ERROR (this << " no user found");
         }
     }
-  else
+    else
     {
       it = m_rlcBufferReq.begin ();
       m_nextRntiDl = (*it).m_rnti;
     }
-  std::map <uint16_t,uint8_t>::iterator itTxMode;
-  do
+    std::map <uint16_t,uint8_t>::iterator itTxMode;
+    do
     {
       itLcRnti = lcActivesPerRnti.find ((*it).m_rnti);
       std::set <uint16_t>::iterator itRnti = rntiAllocated.find ((*it).m_rnti);
@@ -1128,18 +1128,18 @@ RrFfMacScheduler::DoSchedDlTriggerReq (const struct FfMacSchedSapProvider::Sched
       std::map <uint16_t,uint8_t>::iterator itCqi = m_p10CqiRxed.find (newEl.m_rnti);
       for (uint8_t i = 0; i < nLayer; i++)
         {
-          if (itCqi == m_p10CqiRxed.end ())
+            if (itCqi == m_p10CqiRxed.end ())
             {
               newDci.m_mcs.push_back (0); // no info on this user -> lowest MCS
             }
-          else
+            else
             {
               newDci.m_mcs.push_back ( m_amc->GetMcsFromCqi ((*itCqi).second) );
             }
         }
-      int tbSize = (m_amc->GetTbSizeFromMcs (newDci.m_mcs.at (0), rbgPerTb * rbgSize) / 8);
-      uint16_t rlcPduSize = tbSize / lcNum;
-      while ((*it).m_rnti == newEl.m_rnti)
+        int tbSize = (m_amc->GetTbSizeFromMcs (newDci.m_mcs.at (0), rbgPerTb * rbgSize) / 8);
+        uint16_t rlcPduSize = tbSize / lcNum;
+        while ((*it).m_rnti == newEl.m_rnti)
         {
           if ( ((*it).m_rlcTransmissionQueueSize > 0)
                || ((*it).m_rlcRetransmissionQueueSize > 0)
@@ -1148,22 +1148,22 @@ RrFfMacScheduler::DoSchedDlTriggerReq (const struct FfMacSchedSapProvider::Sched
               std::vector <struct RlcPduListElement_s> newRlcPduLe;
               for (uint8_t j = 0; j < nLayer; j++)
                 {
-                  RlcPduListElement_s newRlcEl;
-                  newRlcEl.m_logicalChannelIdentity = (*it).m_logicalChannelIdentity;
-                  NS_LOG_INFO (this << "LCID " << (uint32_t) newRlcEl.m_logicalChannelIdentity << " size " << rlcPduSize << " ID " << (*it).m_rnti << " layer " << (uint16_t)j);
-                  newRlcEl.m_size = rlcPduSize;
-                  UpdateDlRlcBufferInfo ((*it).m_rnti, newRlcEl.m_logicalChannelIdentity, rlcPduSize);
-                  newRlcPduLe.push_back (newRlcEl);
+                    RlcPduListElement_s newRlcEl;
+                    newRlcEl.m_logicalChannelIdentity = (*it).m_logicalChannelIdentity;
+                    NS_LOG_INFO (this << "LCID " << (uint32_t) newRlcEl.m_logicalChannelIdentity << " size " << rlcPduSize << " ID " << (*it).m_rnti << " layer " << (uint16_t)j);
+                    newRlcEl.m_size = rlcPduSize;
+                    UpdateDlRlcBufferInfo ((*it).m_rnti, newRlcEl.m_logicalChannelIdentity, rlcPduSize);
+                    newRlcPduLe.push_back (newRlcEl);
 
-                  if (m_harqOn == true)
+                    if (m_harqOn == true)
                     {
-                      // store RLC PDU list for HARQ
-                      std::map <uint16_t, DlHarqRlcPduListBuffer_t>::iterator itRlcPdu =  m_dlHarqProcessesRlcPduListBuffer.find ((*it).m_rnti);
-                      if (itRlcPdu == m_dlHarqProcessesRlcPduListBuffer.end ())
-                        {
-                          NS_FATAL_ERROR ("Unable to find RlcPdcList in HARQ buffer for RNTI " << (*it).m_rnti);
-                        }
-                      (*itRlcPdu).second.at (j).at (newDci.m_harqProcess).push_back (newRlcEl);
+                        // store RLC PDU list for HARQ
+                        std::map <uint16_t, DlHarqRlcPduListBuffer_t>::iterator itRlcPdu =  m_dlHarqProcessesRlcPduListBuffer.find ((*it).m_rnti);
+                        if (itRlcPdu == m_dlHarqProcessesRlcPduListBuffer.end ())
+                          {
+                            NS_FATAL_ERROR ("Unable to find RlcPdcList in HARQ buffer for RNTI " << (*it).m_rnti);
+                          }
+                        (*itRlcPdu).second.at (j).at (newDci.m_harqProcess).push_back (newRlcEl);
                     }
 
                 }
@@ -1178,11 +1178,11 @@ RrFfMacScheduler::DoSchedDlTriggerReq (const struct FfMacSchedSapProvider::Sched
               break;
             }
         }
-      uint32_t rbgMask = 0;
-      uint16_t i = 0;
-      NS_LOG_INFO (this << " DL - Allocate user " << newEl.m_rnti << " LCs " << (uint16_t)(*itLcRnti).second << " bytes " << tbSize << " mcs " << (uint16_t) newDci.m_mcs.at (0) << " harqId " << (uint16_t)newDci.m_harqProcess <<  " layers " << nLayer);
-      NS_LOG_INFO ("RBG:");
-      while (i < rbgPerTb)
+        uint32_t rbgMask = 0;
+        uint16_t i = 0;
+        NS_LOG_INFO (this << " DL - Allocate user " << newEl.m_rnti << " LCs " << (uint16_t)(*itLcRnti).second << " bytes " << tbSize << " mcs " << (uint16_t) newDci.m_mcs.at (0) << " harqId " << (uint16_t)newDci.m_harqProcess <<  " layers " << nLayer);
+        NS_LOG_INFO ("RBG:");
+        while (i < rbgPerTb)
         {
           if (rbgMap.at (rbgAllocated) == false)
             {

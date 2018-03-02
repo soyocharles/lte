@@ -31,7 +31,12 @@
 
 namespace ns3 {
 
-
+static const int Type0AllocationRbg[4] = {
+  10,       // RGB size 1
+  26,       // RGB size 2
+  63,       // RGB size 3
+  110       // RGB size 4
+};  // see table 7.1.6.1-1 of 3GPP TS 36.213
 struct LteFlowId_t
 {
   uint16_t  m_rnti;

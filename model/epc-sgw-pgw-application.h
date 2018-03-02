@@ -36,6 +36,7 @@
 #include <ns3/application.h>
 #include <ns3/epc-s1ap-sap.h>
 #include <ns3/epc-s11-sap.h>
+#include "PacketMeasurement.h"
 #include <map>
 
 namespace ns3 {
@@ -64,7 +65,8 @@ public:
    * \param s1uSocket socket used to send GTP-U packets to the eNBs
    */
   EpcSgwPgwApplication (const Ptr<VirtualNetDevice> tunDevice, const Ptr<Socket> s1uSocket);
-
+    PacketMeasurement TunMeasure;
+    PacketMeasurement S1uMeasure;
   /** 
    * Destructor
    */
